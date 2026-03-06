@@ -1,100 +1,23 @@
-# FSP Address Registration (Cold + Hot Wallet)
+# entitymanager-scripts
 
-Register FSP (Flare Service Provider) addresses with **Ledger** (cold wallet) and **hot wallet** keys. Uses the EntityManager contract: Identity proposes each role address; each role then confirms.
-
-- **Cold wallet (Ledger)**: Identity signs all **propose** txs (Step A); Delegation signs its **confirm** (Step B). No private keys for these roles.
-- **Hot wallet (.env)**: Submit, SubmitSignatures, and SigningPolicy sign their **confirm** txs in Step B via private keys.
-
-## Prerequisites
-
-- **Node.js** 18+ (ESM)
-- **Ledger** device: connect, unlock, open **Ethereum** app
-- **.env** with contract address and hot wallet keys (see below)
+Register FSP addresses with EntityManager: **Ledger** (Identity + Delegation) and **hot wallet** (Submit, SubmitSignatures, SigningPolicy). Step A = propose on Ledger; Step B = confirm (hot for 3 roles, Ledger for Delegation).
 
 ## Setup
 
-1. Clone or copy the project, then install dependencies:
+```bash
+npm install
+cp .env.example .env
+```
 
-   ```bash
-   npm install
-   ```
+Edit `.env`: set `ENTITY_MANAGER_ADDRESS` and the three hot wallet keys (`SUBMIT_PRIVATE_KEY`, `SUBMIT_SIGNATURES_PRIVATE_KEY`, `SIGNING_POLICY_PRIVATE_KEY`). Their addresses must match the Ledger addresses at paths 1, 2, 3.
 
-2. Copy the example env and edit:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-   Fill in:
-
-   - `ENTITY_MANAGER_ADDRESS` — EntityManager contract (testnet or mainnet)
-   - `SUBMIT_PRIVATE_KEY`, `SUBMIT_SIGNATURES_PRIVATE_KEY`, `SIGNING_POLICY_PRIVATE_KEY` — hot wallet keys whose **addresses match** the Ledger addresses at paths 1, 2, 3
-
-3. **Network**: set `USE_TESTNET=1` (or omit) for **Coston2 testnet**; set `USE_TESTNET=0` for **Flare mainnet**. Testnet uses `testbuild/EntityManager.json`, mainnet uses `build/EntityManager.json`.
-
-## Ledger Paths (BIP-44)
-
-Default paths (override with `LEDGER_*_PATH` in .env if needed):
-
-| Path              | Role            | Usage                          |
-|-------------------|-----------------|--------------------------------|
-| `44'/60'/0'/0/0`  | Identity        | Sign propose (Step A); read    |
-| `44'/60'/0'/0/1`  | Submit          | Read address; confirm = hot    |
-| `44'/60'/0'/0/2`  | SubmitSignatures| Read address; confirm = hot    |
-| `44'/60'/0'/0/3`  | SigningPolicy   | Read address; confirm = hot   |
-| `44'/60'/0'/0/4`  | Delegation      | Sign confirm (Step B); read   |
-
-Cold wallet (device signing): **Identity** and **Delegation** only. The other three paths are used only to **read** addresses; their confirm txs are signed with the hot wallet keys from .env.
+- **Network**: `USE_TESTNET=1` (or omit) = Coston2 testnet; `USE_TESTNET=0` = Flare mainnet.
 
 ## Run
 
-1. **Step A** — Identity proposes all four roles (confirm each tx on the Ledger):
+```bash
+node stepA.js   # Identity proposes on Ledger (connect device, unlock, open Ethereum app)
+node stepB.js   # Each role confirms (hot wallet for 3, Ledger for Delegation)
+```
 
-   ```bash
-   node stepA.js
-   ```
-
-   If the script hangs after “Connecting to Ledger…”, connect the device, unlock it, and open the Ethereum app.
-
-2. **Step B** — Each role confirms (hot wallet for Submit / SubmitSignatures / SigningPolicy; Ledger for Delegation):
-
-   ```bash
-   node stepB.js
-   ```
-
-Run Step A once, then Step B. The same .env and Ledger setup are used for both.
-
-## Files
-
-| File               | Purpose                                      |
-|--------------------|----------------------------------------------|
-| `registerShared.js`| Shared config, RPC, paths, Ledger/hot tx helpers |
-| `stepA.js`         | Propose (Identity on Ledger)                 |
-| `stepB.js`         | Confirm (hot for 3 roles, Ledger for Delegation) |
-| `.env`             | Your secrets (not committed)                 |
-| `.env.example`     | Template; all options documented in comments |
-
-## Troubleshooting
-
-- **“Connecting to Ledger…” then hangs** — Plug in Ledger, unlock, open Ethereum app. No software can substitute for the device.
-- **Missing ENTITY_MANAGER_ADDRESS** — Set it in .env for the correct network (testnet vs mainnet).
-- **“hot wallet address in .env does not match Ledger”** — The three hot wallet addresses must match the addresses shown on Ledger for paths 1, 2, 3. Fix keys or Ledger paths so they align.
-
-## Publish to GitHub
-
-The project is already a git repo with an initial commit. To put it on GitHub:
-
-1. **Create a new repository** on [GitHub](https://github.com/new):
-   - Repository name: e.g. `coldwallet-fsp-register` (or any name you like)
-   - Visibility: Private or Public
-   - Do **not** add a README, .gitignore, or license (they already exist locally)
-
-2. **Add the remote and push** (replace `YOUR_USERNAME` and `REPO_NAME` with yours):
-
-   ```bash
-   git remote add origin https://github.com/YOUR_USERNAME/REPO_NAME.git
-   git branch -M main
-   git push -u origin main
-   ```
-
-   If you use SSH: `git remote add origin git@github.com:YOUR_USERNAME/REPO_NAME.git` then push as above.
+Run Step A first, then Step B. If it hangs at "Connecting to Ledger…", plug in the device, unlock it, and open the Ethereum app.
