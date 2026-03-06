@@ -79,3 +79,22 @@ Run Step A once, then Step B. The same .env and Ledger setup are used for both.
 - **“Connecting to Ledger…” then hangs** — Plug in Ledger, unlock, open Ethereum app. No software can substitute for the device.
 - **Missing ENTITY_MANAGER_ADDRESS** — Set it in .env for the correct network (testnet vs mainnet).
 - **“hot wallet address in .env does not match Ledger”** — The three hot wallet addresses must match the addresses shown on Ledger for paths 1, 2, 3. Fix keys or Ledger paths so they align.
+
+## Publish to GitHub
+
+The project is already a git repo with an initial commit. To put it on GitHub:
+
+1. **Create a new repository** on [GitHub](https://github.com/new):
+   - Repository name: e.g. `coldwallet-fsp-register` (or any name you like)
+   - Visibility: Private or Public
+   - Do **not** add a README, .gitignore, or license (they already exist locally)
+
+2. **Add the remote and push** (replace `YOUR_USERNAME` and `REPO_NAME` with yours):
+
+   ```bash
+   git remote add origin https://github.com/YOUR_USERNAME/REPO_NAME.git
+   git branch -M main
+   git push -u origin main
+   ```
+
+   If you use SSH: `git remote add origin git@github.com:YOUR_USERNAME/REPO_NAME.git` then push as above.
