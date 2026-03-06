@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Secrets (never commit)
+.env
+
+# OS / editor
+.DS_Store
+*.log
+.idea/
+.vscode/
+
+# Optional: Cursor
+.cursor/
