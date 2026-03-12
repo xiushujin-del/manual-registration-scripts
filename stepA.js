@@ -1,5 +1,5 @@
 /** Step A: Identity signs propose for all 4 roles on Ledger. Run this first. */
-import { paths, getContract, config, getLedgerEth, getAddress, sendTxWithLedger, networkName } from "./registerShared.js";
+import { paths, getContract, config, getLedgerEth, getAddress, getRoleAddress, sendTxWithLedger, networkName } from "./registerShared.js";
 
 const ROLES = ["Submit", "SubmitSignatures", "SigningPolicy", "Delegation"];
 
@@ -16,14 +16,18 @@ async function main() {
 
   const roleAddrs = {};
   for (const name of ROLES) {
-    roleAddrs[name] = (await getAddress(eth, paths[name])).toLowerCase();
+    roleAddrs[name] = await getRoleAddress(eth, name);
     console.log(name + ":", roleAddrs[name]);
   }
 
   const to = contract.options.address;
   for (const [name, proposeMethod] of config) {
+    const roleAddr = roleAddrs[name];
+    const data = contract.methods[proposeMethod](roleAddr).encodeABI();
     console.log("\nPropose", name, "- confirm on Ledger");
-    await sendTxWithLedger(eth, identityPath, to, contract.methods[proposeMethod](roleAddrs[name]).encodeABI(), identityAddress);
+    console.log("  method:", proposeMethod, "| params:", { proposedAddress: roleAddr });
+    console.log("  sendTxWithLedger:", { fromPath: identityPath, to, data, fromAddress: identityAddress });
+    await sendTxWithLedger(eth, identityPath, to, data, identityAddress);
     await new Promise((r) => setTimeout(r, 2000));
   }
   console.log("\nStep A done. Run stepB.js next.");

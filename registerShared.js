@@ -25,10 +25,14 @@ export const networkName = isTestnet ? "Coston2 testnet" : "Flare mainnet";
 
 export const paths = {
   Identity: process.env.LEDGER_IDENTITY_PATH || "44'/60'/0'/0/0",
-  Submit: process.env.LEDGER_SUBMIT_PATH || "44'/60'/0'/0/1",
-  SubmitSignatures: process.env.LEDGER_SUBMIT_SIGNATURES_PATH || "44'/60'/0'/0/2",
-  SigningPolicy: process.env.LEDGER_SIGNING_POLICY_PATH || "44'/60'/0'/0/3",
-  Delegation: process.env.LEDGER_DELEGATION_PATH || "44'/60'/0'/0/4",
+  Delegation: process.env.LEDGER_DELEGATION_PATH || "44'/60'/0'/0/1",
+};
+
+// 热钱包直接使用 address，不从 Ledger 派生
+export const hotWalletAddresses = {
+  Submit: process.env.SUBMIT_ADDRESS,
+  SubmitSignatures: process.env.SUBMIT_SIGNATURES_ADDRESS,
+  SigningPolicy: process.env.SIGNING_POLICY_ADDRESS,
 };
 
 export const config = [
@@ -58,6 +62,15 @@ export async function getAddress(eth, path) {
   const p = path.startsWith("m/") ? path.slice(2) : path;
   const { address } = await eth.getAddress(p, false, false);
   return address;
+}
+
+/** Get role address: from env for hot wallets, from Ledger path for Delegation. */
+export async function getRoleAddress(eth, name) {
+  const raw = hotWalletAddresses[name];
+  const addr = raw && (raw.startsWith("0x") ? raw : "0x" + raw).trim();
+  if (addr && addr.length === 42) return addr.toLowerCase();
+  if (name in hotWalletAddresses) throw new Error("Set SUBMIT_ADDRESS, SUBMIT_SIGNATURES_ADDRESS, SIGNING_POLICY_ADDRESS in .env (each 0x + 40 hex chars)");
+  return (await getAddress(eth, paths[name])).toLowerCase();
 }
 
 export async function sendTxWithLedger(eth, fromPath, to, data, fromAddress) {
